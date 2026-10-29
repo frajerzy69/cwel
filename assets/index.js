@@ -51,29 +51,31 @@ imageInput.addEventListener('change', (event) => {
     reader.onload = function() {
         var base64Image = reader.result.split(',')[1];
 
-        var data = new FormData();
-        data.append("key", "99995f1922de96ce94f5af06288ff671"); // IMGBB API key
-        data.append("image", base64Image);
+       var data = new FormData();
+data.append("file", base64Image); // Cloudinary oczekuje pola "file" zamiast "image"
+data.append("upload_preset", "moje_zdjecia"); // Wpisz nazwę swojego presetu z panelu Cloudinary
 
-        fetch('https://api.imgbb.com/1/upload', {
-            method: 'POST',
-            body: data
-        })
-        .then(result => result.json())
-        .then(response => {
-            if(response.success) {
-                var url = response.data.url;
-                upload.classList.remove("error_shown");
-                upload.setAttribute("selected", url);
-                upload.classList.add("upload_loaded");
-                upload.classList.remove("upload_loading");
-                upload.querySelector(".upload_uploaded").src = url;
-            } else {
-                console.error("Upload failed:", response);
-                upload.classList.remove("upload_loading");
-                upload.classList.add("error_shown");
-            }
-        })
+fetch('https://api.cloudinary.com/v1_1/he2xvyrp/image/upload', {
+    method: 'POST',
+    body: data
+})
+.then(result => result.json())
+.then(response => {
+    // Sprawdzamy czy Cloudinary zwróciło bezpieczny link (secure_url)
+    if(response.secure_url) {
+        var url = response.secure_url;
+        upload.classList.remove("error_shown");
+        upload.setAttribute("selected", url);
+        upload.classList.add("upload_loaded");
+        upload.classList.remove("upload_loading");
+        upload.querySelector(".upload_uploaded").src = url;
+    } else {
+        console.error("Błąd przesyłania do Cloudinary:", response);
+    }
+})
+.catch(error => {
+    console.error("Błąd sieci:", error);
+});
         .catch(err => {
             console.error("Upload error:", err);
             upload.classList.remove("upload_loading");
